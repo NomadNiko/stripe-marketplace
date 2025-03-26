@@ -29,13 +29,14 @@ function RouteGuard({
       setLoading(true);
       return;
     }
-
     // Auth check is complete
     setLoading(false);
 
-    // Check if user has required role
+    // Check if user has required role - modified to handle string IDs
     const hasRequiredRole =
-      user && user.role?.id && roles.includes(Number(user.role.id));
+      user &&
+      user.role?.id &&
+      roles.some((role) => String(role) === String(user.role?.id));
 
     if (!hasRequiredRole) {
       // Redirect to sign-in if not authenticated or profile if authenticated but wrong role
@@ -43,7 +44,6 @@ function RouteGuard({
       const returnToPath =
         currentLocation.replace(new URL(currentLocation).origin, "") ||
         `/${language}`;
-
       let redirectTo: string;
       if (!user) {
         const params = new URLSearchParams({ returnTo: returnToPath });
@@ -51,14 +51,16 @@ function RouteGuard({
       } else {
         redirectTo = `/${language}`;
       }
-
       router.replace(redirectTo);
     }
   }, [user, isLoaded, router, language, roles, setLoading]);
 
-  // Only render children if authenticated and has required role
+  // Only render children if authenticated and has required role - modified to handle string IDs
   const hasRequiredRole =
-    user && user.role?.id && roles.includes(Number(user.role.id));
+    user &&
+    user.role?.id &&
+    roles.some((role) => String(role) === String(user.role?.id));
+
   return isLoaded && hasRequiredRole ? <>{children}</> : null;
 }
 

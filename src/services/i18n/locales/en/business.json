@@ -1,0 +1,79 @@
+{
+  "register": {
+    "title": "Business Registration",
+    "sections": {
+      "userDetails": "Account Information",
+      "businessDetails": "Business Information"
+    },
+    "fields": {
+      "email": "Email",
+      "password": "Password",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "businessName": "Business Name",
+      "displayName": "Display Name",
+      "description": "Description",
+      "website": "Website (optional)",
+      "phone": "Phone Number (optional)"
+    },
+    "placeholders": {
+      "businessName": "Your business legal name",
+      "displayName": "your-business",
+      "description": "Describe your business in a few sentences"
+    },
+    "displayNameHelp": "This will be used in your store URL: example.com/your-business",
+    "validation": {
+      "email": {
+        "required": "Email is required",
+        "invalid": "Please enter a valid email address",
+        "emailAlreadyExists": "This email is already in use"
+      },
+      "password": {
+        "required": "Password is required",
+        "min": "Password must be at least 6 characters"
+      },
+      "firstName": {
+        "required": "First name is required"
+      },
+      "lastName": {
+        "required": "Last name is required"
+      },
+      "businessName": {
+        "required": "Business name is required",
+        "min": "Business name must be at least 2 characters",
+        "max": "Business name cannot exceed 100 characters"
+      },
+      "displayName": {
+        "required": "Display name is required",
+        "min": "Display name must be at least 3 characters",
+        "max": "Display name cannot exceed 30 characters",
+        "format": "Display name can only contain lowercase letters, numbers, and hyphens",
+        "alreadyExists": "This display name is already taken"
+      },
+      "description": {
+        "max": "Description cannot exceed 500 characters"
+      },
+      "website": {
+        "url": "Please enter a valid URL (e.g., https://example.com)"
+      }
+    },
+    "actions": {
+      "submit": "Register Business",
+      "backToLogin": "Back to Login"
+    },
+    "alerts": {
+      "success": "Your business has been registered! Please sign in to continue.",
+      "error": "There was an error registering your business. Please try again."
+    }
+  },
+  "onboarding": {
+    "title": "Connect Your Stripe Account",
+    "description": "Complete the Stripe onboarding process to start accepting payments.",
+    "noBusiness": "You don't have any businesses. Please register a business first.",
+    "errors": {
+      "businessNotFound": "Business not found.",
+      "fetchError": "There was an error retrieving your business information.",
+      "noBusiness": "No business found for your account."
+    }
+  }
+}
