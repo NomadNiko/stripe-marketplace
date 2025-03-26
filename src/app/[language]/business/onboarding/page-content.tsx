@@ -1,3 +1,4 @@
+// src/app/[language]/business/onboarding/page-content.tsx
 "use client";
 import { useEffect, useState } from "react";
 import { useTranslation } from "@/services/i18n/client";
@@ -9,6 +10,7 @@ import { useGetMyBusinesses } from "@/services/api/services/business";
 import { RoleEnum } from "@/services/api/types/role";
 import BusinessRouteGuard from "@/services/auth/business-route-guard";
 import HTTP_CODES_ENUM from "@/services/api/types/http-codes";
+import { Business } from "@/services/api/types/business";
 
 function BusinessOnboardingContent() {
   const { t } = useTranslation("business");
@@ -28,10 +30,18 @@ function BusinessOnboardingContent() {
         const response = await getMyBusinesses();
         console.log("MyBusinesses API response:", response);
 
-        if (
-          response.status !== HTTP_CODES_ENUM.OK ||
-          !response.data.data.length
-        ) {
+        // Handle the case where the API returns a direct array instead of {data, hasNextPage} format
+        let businessesArray: Business[] = [];
+
+        if (response.status === HTTP_CODES_ENUM.OK) {
+          if (Array.isArray(response.data)) {
+            businessesArray = response.data;
+          } else if (response.data && Array.isArray(response.data.data)) {
+            businessesArray = response.data.data;
+          }
+        }
+
+        if (!businessesArray.length) {
           console.error("No businesses found or API error", response);
           setError("noBusiness");
           setLoading(false);
@@ -41,23 +51,23 @@ function BusinessOnboardingContent() {
         const paramBusinessId = searchParams.get("businessId");
         if (paramBusinessId) {
           // Check if the user has access to this business
-          const hasBusiness = response.data.data.some(
-            (b) => b.id === paramBusinessId
+          const hasBusiness = businessesArray.some(
+            (b: Business) => b.id === paramBusinessId
           );
           if (hasBusiness) {
             setBusinessId(paramBusinessId);
             console.log("Using business ID from URL:", paramBusinessId);
           } else {
-            setBusinessId(response.data.data[0].id);
+            setBusinessId(businessesArray[0].id);
             console.log(
               "Using first available business:",
-              response.data.data[0].id
+              businessesArray[0].id
             );
           }
         } else {
           // Use the first business
-          setBusinessId(response.data.data[0].id);
-          console.log("Using first business:", response.data.data[0].id);
+          setBusinessId(businessesArray[0].id);
+          console.log("Using first business:", businessesArray[0].id);
         }
         setLoading(false);
       } catch (error) {
