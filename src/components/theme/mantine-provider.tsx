@@ -1,10 +1,4 @@
-import {
-  MantineProvider,
-  createTheme,
-  ColorSchemeScript,
-  MantineTheme,
-  rgba,
-} from "@mantine/core";
+import { MantineProvider, createTheme, ColorSchemeScript } from "@mantine/core";
 import { oxanium } from "@/config/fonts";
 import "@mantine/core/styles.css";
 
