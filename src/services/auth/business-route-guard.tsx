@@ -15,26 +15,23 @@ function BusinessRouteGuard({ children }: PropsWithChildren<{}>) {
       setLoading(true);
       return;
     }
+
     setLoading(false);
 
-    // Fix: Modified to handle role ID as string
+    // Standardized role comparison using String
     const hasBusinessRole =
       user &&
       user.role?.id &&
-      (user.role.id === RoleEnum.BUSINESS ||
-        user.role.id === String(RoleEnum.BUSINESS));
+      String(user.role.id) === String(RoleEnum.BUSINESS);
 
     if (!hasBusinessRole) {
       router.replace("/sign-in");
     }
   }, [user, isLoaded, router, setLoading]);
 
-  // Fix: Same correction here
+  // Same standardized comparison
   const hasBusinessRole =
-    user &&
-    user.role?.id &&
-    (user.role.id === RoleEnum.BUSINESS ||
-      user.role.id === String(RoleEnum.BUSINESS));
+    user && user.role?.id && String(user.role.id) === String(RoleEnum.BUSINESS);
 
   return isLoaded && hasBusinessRole ? <>{children}</> : null;
 }

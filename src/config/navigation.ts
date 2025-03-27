@@ -19,6 +19,16 @@ const createNavigationConfig = (): NavigationItem[] => [
     path: "/admin-panel/users",
     roles: [RoleEnum.ADMIN],
   },
+  {
+    label: "common:navigation.onboard",
+    path: "/business/onboarding",
+    roles: [RoleEnum.BUSINESS],
+  },
+  {
+    label: "common:navigation.register",
+    path: "/business/register",
+    roles: [RoleEnum.BUSINESS],
+  },
 ];
 
 // Return navigation config with authentication items

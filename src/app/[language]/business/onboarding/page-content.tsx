@@ -1,16 +1,26 @@
-// src/app/[language]/business/onboarding/page-content.tsx
 "use client";
 import { useEffect, useState } from "react";
 import { useTranslation } from "@/services/i18n/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import useAuth from "@/services/auth/use-auth";
-import { Container, Title, Card, Text, Loader, Center } from "@mantine/core";
-import { StripeOnboardingEmbed } from "@/components/stripe/onboarding-embed";
+import {
+  Container,
+  Title,
+  Card,
+  Text,
+  Loader,
+  Center,
+  Button,
+  Alert,
+  Stack,
+} from "@mantine/core";
+import StripeConnectOnboarding from "@/components/stripe/connect-onboarding";
 import { useGetMyBusinesses } from "@/services/api/services/business";
 import { RoleEnum } from "@/services/api/types/role";
 import BusinessRouteGuard from "@/services/auth/business-route-guard";
 import HTTP_CODES_ENUM from "@/services/api/types/http-codes";
 import { Business } from "@/services/api/types/business";
+import { useCheckOnboardingStatus } from "@/services/api/services/stripe";
 
 function BusinessOnboardingContent() {
   const { t } = useTranslation("business");
@@ -20,23 +30,27 @@ function BusinessOnboardingContent() {
   const [loading, setLoading] = useState(true);
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [alreadyComplete, setAlreadyComplete] = useState(false);
+
+  // No more toggling onboarding visibility - it's always visible when businessId is set
+  // Removed showOnboarding state
+
   const getMyBusinesses = useGetMyBusinesses();
+  const checkOnboardingStatus = useCheckOnboardingStatus();
 
   // Get selected business ID from URL or use the first one
   useEffect(() => {
     const fetchBusinesses = async () => {
       console.log("Fetching businesses for user:", user?.id);
       try {
+        setLoading(true);
         const response = await getMyBusinesses();
         console.log("MyBusinesses API response:", response);
 
-        // Handle the case where the API returns a direct array instead of {data, hasNextPage} format
+        // Handle standardized response format
         let businessesArray: Business[] = [];
-
         if (response.status === HTTP_CODES_ENUM.OK) {
-          if (Array.isArray(response.data)) {
-            businessesArray = response.data;
-          } else if (response.data && Array.isArray(response.data.data)) {
+          if (response.data.data && Array.isArray(response.data.data)) {
             businessesArray = response.data.data;
           }
         }
@@ -49,16 +63,19 @@ function BusinessOnboardingContent() {
         }
 
         const paramBusinessId = searchParams.get("businessId");
+        let selectedBusinessId: string;
+
         if (paramBusinessId) {
           // Check if the user has access to this business
           const hasBusiness = businessesArray.some(
             (b: Business) => b.id === paramBusinessId
           );
+
           if (hasBusiness) {
-            setBusinessId(paramBusinessId);
+            selectedBusinessId = paramBusinessId;
             console.log("Using business ID from URL:", paramBusinessId);
           } else {
-            setBusinessId(businessesArray[0].id);
+            selectedBusinessId = businessesArray[0].id;
             console.log(
               "Using first available business:",
               businessesArray[0].id
@@ -66,9 +83,28 @@ function BusinessOnboardingContent() {
           }
         } else {
           // Use the first business
-          setBusinessId(businessesArray[0].id);
+          selectedBusinessId = businessesArray[0].id;
           console.log("Using first business:", businessesArray[0].id);
         }
+
+        setBusinessId(selectedBusinessId);
+
+        // Check if onboarding is already complete
+        try {
+          const statusResponse = await checkOnboardingStatus({
+            businessId: selectedBusinessId,
+          });
+          if (
+            statusResponse.status === HTTP_CODES_ENUM.OK &&
+            statusResponse.data.isComplete
+          ) {
+            setAlreadyComplete(true);
+          }
+        } catch (statusError) {
+          console.error("Error checking onboarding status:", statusError);
+          // If status check fails, continue with onboarding flow
+        }
+
         setLoading(false);
       } catch (error) {
         console.error("Error fetching businesses:", error);
@@ -81,15 +117,18 @@ function BusinessOnboardingContent() {
     if (
       user &&
       user.role?.id &&
-      (user.role.id === RoleEnum.BUSINESS ||
-        user.role.id === String(RoleEnum.BUSINESS))
+      String(user.role.id) === String(RoleEnum.BUSINESS)
     ) {
       fetchBusinesses();
     } else {
       console.log("User not logged in or not a business user:", user);
       setLoading(false);
     }
-  }, [user, searchParams, getMyBusinesses]);
+  }, [user, searchParams, getMyBusinesses, checkOnboardingStatus]);
+
+  const handleOnboardingComplete = () => {
+    router.push("/business/dashboard");
+  };
 
   if (loading) {
     return (
@@ -105,8 +144,13 @@ function BusinessOnboardingContent() {
         <Title order={2} mb="lg">
           {t("onboarding.title")}
         </Title>
-        <Card shadow="xs" p="md" withBorder>
-          <Text color="red">{t(`onboarding.errors.${error}`)}</Text>
+        <Card
+          shadow="xs"
+          p="md"
+          withBorder
+          style={{ backgroundColor: "#1C283A", color: "white" }}
+        >
+          <Alert color="red">{t(`onboarding.errors.${error}`)}</Alert>
         </Card>
       </Container>
     );
@@ -118,24 +162,68 @@ function BusinessOnboardingContent() {
         <Title order={2} mb="lg">
           {t("onboarding.title")}
         </Title>
-        <Card shadow="xs" p="md" withBorder>
-          <Text>{t("onboarding.noBusiness")}</Text>
+        <Card
+          shadow="xs"
+          p="md"
+          withBorder
+          style={{ backgroundColor: "#1C283A", color: "white" }}
+        >
+          <Text color="white">{t("onboarding.noBusiness")}</Text>
         </Card>
       </Container>
     );
   }
 
+  // Already completed view
+  if (alreadyComplete) {
+    return (
+      <Container size="md">
+        <Stack gap="md">
+          <Title order={2} mb="lg">
+            {t("onboarding.title")}
+          </Title>
+          <Card
+            shadow="xs"
+            p="md"
+            withBorder
+            style={{ backgroundColor: "#1C283A", color: "white" }}
+          >
+            <Center py="md">
+              <Stack align="center" gap="md">
+                <Text size="lg" ta="center" c="white">
+                  {t("onboarding.alreadyComplete")}
+                </Text>
+                <Button onClick={() => router.push("/business/dashboard")}>
+                  {t("onboarding.goToDashboard")}
+                </Button>
+              </Stack>
+            </Center>
+          </Card>
+        </Stack>
+      </Container>
+    );
+  }
+
+  // Main onboarding view - always show onboarding instead of toggle
   return (
     <Container size="md">
       <Title order={2} mb="lg">
         {t("onboarding.title")}
       </Title>
-      <Card shadow="xs" p="md" withBorder mb="md">
-        <Text>{t("onboarding.description")}</Text>
+      <Card
+        shadow="xs"
+        p="md"
+        withBorder
+        style={{ backgroundColor: "#1C283A", color: "white" }}
+        mb="md"
+      >
+        <Text color="white">{t("onboarding.description")}</Text>
       </Card>
-      <StripeOnboardingEmbed
+
+      {/* Always display the onboarding component when businessId is set */}
+      <StripeConnectOnboarding
         businessId={businessId}
-        onComplete={() => router.push("/business/dashboard")}
+        onComplete={handleOnboardingComplete}
       />
     </Container>
   );

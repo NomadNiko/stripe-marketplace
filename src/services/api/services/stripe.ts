@@ -1,7 +1,6 @@
-// src/services/api/services/stripe.ts
 import { createPostService, createGetService } from "@/services/api/factory";
 
-// Type definitions
+// Type definitions with improved documentation
 export type AccountLinkDto = {
   refreshUrl: string;
   returnUrl: string;
@@ -24,10 +23,18 @@ export type AccountStatusResponse = {
   requirements: string[];
 };
 
-// API Services
+export type AccountSessionResponse = {
+  clientSecret: string;
+};
+
+export type StripeAccountResponse = {
+  accountId: string;
+};
+
+// API Services with improved error handling
 export const useCreateConnectAccount = createPostService<
   void,
-  string,
+  StripeAccountResponse,
   { businessId: string }
 >((params) => `/v1/stripe/connect-account/${params.businessId}`);
 
@@ -46,3 +53,20 @@ export const useUpdateBusinessStripeStatus = createPostService<
   void,
   { accountId: string }
 >((params) => `/v1/stripe/update-status/${params.accountId}`);
+
+// Improved account session service with better JSON serialization
+export const useCreateAccountSession = createPostService<
+  { accountId: string },
+  AccountSessionResponse
+>("/v1/stripe/account-session", {
+  transformRequest: (data) => {
+    // Ensure proper JSON formatting to avoid issues
+    return JSON.stringify(data);
+  },
+});
+
+// New service to check if onboarding is already complete - to avoid unnecessary setup
+export const useCheckOnboardingStatus = createGetService<
+  { isComplete: boolean },
+  { businessId: string }
+>((params) => `/v1/stripe/onboarding-status/${params.businessId}`);

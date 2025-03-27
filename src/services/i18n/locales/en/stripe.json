@@ -1,28 +1,31 @@
 {
   "onboarding": {
-    "cardTitle": "Stripe Account Setup",
-    "checking": "Checking your account status...",
-    "notStartedDescription": "To start accepting payments, you need to connect your business to Stripe's payment platform.",
-    "inProgressDescription": "Your Stripe account setup is in progress. Complete all steps to start accepting payments.",
-    "completedTitle": "Account Setup Complete!",
-    "completedDescription": "Your Stripe account is now fully connected and you can start accepting payments.",
-    "startButton": "Start Setup",
-    "continueButton": "Continue Setup",
-    "goToDashboardButton": "Go to Dashboard",
-    "retryButton": "Try Again",
-    "steps": {
-      "detailsSubmitted": "Account Information",
-      "chargesEnabled": "Payment Processing",
-      "payoutsEnabled": "Payout Processing"
-    },
-    "errors": {
+    "title": "Connect Your Stripe Account",
+    "description": "Complete the Stripe onboarding process to start accepting payments.",
+    "startPrompt": "Ready to set up your payment processing? Click the button below to start the Stripe onboarding process.",
+    "startButton": "Start Stripe Setup",
+    "noBusiness": "You don't have any businesses. Please register a business first.",
+    "loading": "Initializing Stripe Connect...",
+    "embedTitle": "Complete Your Stripe Account Setup",
+    "embedDescription": "Set up your account to accept payments through our platform.",
+    "error": {
       "title": "Setup Error",
-      "unknown": "An unknown error occurred. Please try again.",
-      "checkingStatus": "There was an error checking your account status.",
-      "checkingStripeStatus": "There was an error checking your Stripe account status.",
-      "creatingAccount": "There was an error creating your Stripe account.",
-      "creatingAccountLink": "There was an error creating the onboarding link.",
-      "startingOnboarding": "There was an error starting the onboarding process."
+      "generic": "An unknown error occurred. Please try again.",
+      "account": "Could not create or retrieve your Stripe account.",
+      "session": "Failed to create an account session.",
+      "initialization": "There was a problem initializing the Stripe Connect setup."
+    },
+    "exitedTitle": "Setup Paused",
+    "exitedMessage": "You've exited the onboarding process. Your progress has been saved.",
+    "resumeButton": "Resume Setup",
+    "retryButton": "Try Again",
+    "completedTitle": "Stripe Setup Complete!",
+    "completedDescription": "Your account is now set up to accept payments.",
+    "continueButton": "Continue to Dashboard",
+    "errors": {
+      "businessNotFound": "Business not found.",
+      "fetchError": "There was an error retrieving your business information.",
+      "noBusiness": "No business found for your account."
     }
   }
 }
