@@ -1,3 +1,4 @@
+// src/hooks/use-stripe-connect.ts
 "use client";
 import { useState, useEffect } from "react";
 import { StripeConnectInstance } from "@stripe/connect-js";
@@ -17,7 +18,6 @@ export const useStripeConnect = (businessId: string) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stripeAccountId, setStripeAccountId] = useState<string | null>(null);
-
   const createConnectAccount = useCreateConnectAccount();
   const createAccountSession = useCreateAccountSession();
   const updateBusinessStripeStatus = useUpdateBusinessStripeStatus();
@@ -25,71 +25,87 @@ export const useStripeConnect = (businessId: string) => {
   useEffect(() => {
     const initializeStripeConnect = async () => {
       if (!businessId) return;
-
       setIsLoading(true);
       setError(null);
-
       try {
         console.log("Creating/Getting Stripe account...");
-
         // 1. Create/Get Stripe account for the business
-        const accountResponse = await createConnectAccount(undefined, {
-          businessId,
-        });
+        const accountResponse = await createConnectAccount(
+          { businessId }, // Send businessId in the request body
+          undefined // No path params needed here
+        );
 
-        if (accountResponse.status !== HTTP_CODES_ENUM.OK) {
+        if (
+          accountResponse.status !== HTTP_CODES_ENUM.OK &&
+          accountResponse.status !== HTTP_CODES_ENUM.CREATED
+        ) {
           throw new Error(t("onboarding.error.account"));
         }
 
         // Get the account ID string from the response
-        const accountId = accountResponse.data.accountId;
+        const accountId = accountResponse.data.account;
+        console.log("Got account ID:", accountId);
         setStripeAccountId(accountId);
 
         console.log("Updating business with Stripe Connect ID...");
-
         // 2. Update the business with the Stripe account ID (immediate update)
-        await updateBusinessStripeStatus(undefined, {
-          accountId: accountId,
-        });
+        await updateBusinessStripeStatus(
+          { id: accountId }, // Request body
+          { businessId } // Path param
+        );
 
         console.log("Creating account session...");
-
-        // 3. Function to fetch client secret for Stripe Connect
-        const fetchClientSecret = async () => {
-          // Send accountId as a JSON object
+        // 3. Create account session and get client secret
+        try {
           const sessionResponse = await createAccountSession({
             accountId: accountId,
           });
 
-          if (sessionResponse.status !== HTTP_CODES_ENUM.OK) {
+          if (
+            sessionResponse.status !== HTTP_CODES_ENUM.OK &&
+            sessionResponse.status !== HTTP_CODES_ENUM.CREATED
+          ) {
+            console.error("Error creating session:", sessionResponse);
             throw new Error(t("onboarding.error.session"));
           }
 
-          return sessionResponse.data.clientSecret;
-        };
+          console.log("Session created successfully");
 
-        console.log("Initializing Stripe Connect...");
+          // 4. Initialize Stripe Connect
+          console.log("Initializing Stripe Connect...");
+          const stripePublishableKey =
+            process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
 
-        // 4. Initialize Stripe Connect with dark theme matching iXplor
-        const stripeConnect = await loadConnectAndInitialize({
-          publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
-          fetchClientSecret,
-          appearance: {
-            overlays: "dialog", // Key change: use dialog overlay like iXplor
-            variables: {
-              colorPrimary: "#FFFFFF", // White primary color for buttons
-              colorBackground: "#1C283A", // Dark background like iXplor
-              colorText: "#FFFFFF", // White text
-              fontFamily:
-                '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-              borderRadius: "8px",
-              spacingUnit: "4px",
+          if (!stripePublishableKey) {
+            throw new Error("Missing Stripe publishable key");
+          }
+
+          const stripeConnect = await loadConnectAndInitialize({
+            publishableKey: stripePublishableKey,
+            fetchClientSecret: async () => {
+              // This function should return just the client secret as a string
+              return sessionResponse.data.clientSecret;
             },
-          },
-        });
+            appearance: {
+              overlays: "dialog",
+              variables: {
+                colorPrimary: "#FFFFFF",
+                colorBackground: "#1C283A",
+                colorText: "#FFFFFF",
+                fontFamily:
+                  '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                borderRadius: "8px",
+                spacingUnit: "4px",
+              },
+            },
+          });
 
-        setStripeConnectInstance(stripeConnect);
-        console.log("Stripe Connect initialized successfully");
+          setStripeConnectInstance(stripeConnect);
+          console.log("Stripe Connect initialized successfully");
+        } catch (sessionError) {
+          console.error("Session creation error:", sessionError);
+          throw sessionError;
+        }
       } catch (err) {
         console.error("Stripe Connect initialization error:", err);
         setError(

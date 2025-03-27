@@ -32,9 +32,6 @@ function BusinessOnboardingContent() {
   const [error, setError] = useState<string | null>(null);
   const [alreadyComplete, setAlreadyComplete] = useState(false);
 
-  // No more toggling onboarding visibility - it's always visible when businessId is set
-  // Removed showOnboarding state
-
   const getMyBusinesses = useGetMyBusinesses();
   const checkOnboardingStatus = useCheckOnboardingStatus();
 
@@ -94,6 +91,7 @@ function BusinessOnboardingContent() {
           const statusResponse = await checkOnboardingStatus({
             businessId: selectedBusinessId,
           });
+
           if (
             statusResponse.status === HTTP_CODES_ENUM.OK &&
             statusResponse.data.isComplete
@@ -219,7 +217,6 @@ function BusinessOnboardingContent() {
       >
         <Text color="white">{t("onboarding.description")}</Text>
       </Card>
-
       {/* Always display the onboarding component when businessId is set */}
       <StripeConnectOnboarding
         businessId={businessId}

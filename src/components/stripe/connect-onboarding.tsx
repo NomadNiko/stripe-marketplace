@@ -40,6 +40,7 @@ export const StripeConnectOnboarding: React.FC<
 
   const { stripeConnectInstance, stripeAccountId, isLoading, error } =
     useStripeConnect(businessId);
+
   const updateBusinessStripeStatus = useUpdateBusinessStripeStatus();
   const getAccountStatus = useGetAccountStatus();
 
@@ -47,7 +48,6 @@ export const StripeConnectOnboarding: React.FC<
   const checkAccountStatus = useCallback(
     async (isSignificantStep = false) => {
       if (!stripeAccountId) return;
-
       try {
         // Only log on significant steps to reduce noise
         if (isSignificantStep) {
@@ -76,9 +76,10 @@ export const StripeConnectOnboarding: React.FC<
             }
 
             // Update business status
-            await updateBusinessStripeStatus(undefined, {
-              accountId: stripeAccountId,
-            });
+            await updateBusinessStripeStatus(
+              { id: stripeAccountId },
+              { businessId }
+            );
 
             // Call onComplete after a short delay to show success
             if (onComplete) {
@@ -94,20 +95,24 @@ export const StripeConnectOnboarding: React.FC<
         console.error("Error checking account status:", err);
       }
     },
-    [stripeAccountId, getAccountStatus, updateBusinessStripeStatus, onComplete]
+    [
+      stripeAccountId,
+      getAccountStatus,
+      updateBusinessStripeStatus,
+      onComplete,
+      businessId,
+    ]
   );
 
   // Improved step change handler that matches iXplor's approach
   const handleStepChange = useCallback(
     (change: StepChange) => {
       if (!mountedRef.current) return;
-
       // Log the entire change object like iXplor does
       console.log("Step change:", change);
 
       // Instead of trying to access specific properties that TypeScript doesn't recognize,
       // we'll use a simpler approach to detect significant steps
-
       // Check if the stringified object contains certain keywords
       const changeString = JSON.stringify(change).toLowerCase();
       const isSignificantStep =
@@ -136,22 +141,24 @@ export const StripeConnectOnboarding: React.FC<
   // Improved exit handler - like iXplor
   const handleExit = useCallback(() => {
     if (!mountedRef.current) return;
-
     console.log("Onboarding exited by user");
     setOnboardingExited(true);
 
     // Still update status but don't disrupt user flow
     if (stripeAccountId) {
-      updateBusinessStripeStatus(undefined, {
-        accountId: stripeAccountId,
-      }).catch((err) =>
-        console.error("Error updating business status on exit:", err)
+      updateBusinessStripeStatus({ id: stripeAccountId }, { businessId }).catch(
+        (err) => console.error("Error updating business status on exit:", err)
       );
     }
 
     // Automatically check status on exit
     checkAccountStatus(true);
-  }, [stripeAccountId, updateBusinessStripeStatus, checkAccountStatus]);
+  }, [
+    stripeAccountId,
+    updateBusinessStripeStatus,
+    checkAccountStatus,
+    businessId,
+  ]);
 
   // Effect for cleanup
   useEffect(() => {
@@ -308,7 +315,6 @@ export const StripeConnectOnboarding: React.FC<
       <Text mb="lg" c="white">
         {t("onboarding.embedDescription")}
       </Text>
-
       {stripeConnectInstance && (
         <Box
           style={{

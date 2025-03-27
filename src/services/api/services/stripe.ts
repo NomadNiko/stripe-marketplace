@@ -1,3 +1,4 @@
+// ./stripe-marketplace/src/services/api/services/stripe.ts
 import { createPostService, createGetService } from "@/services/api/factory";
 
 // Type definitions with improved documentation
@@ -28,45 +29,41 @@ export type AccountSessionResponse = {
 };
 
 export type StripeAccountResponse = {
-  accountId: string;
+  account: string; // Changed to match backend response
 };
 
-// API Services with improved error handling
+// API Services with corrected paths to match backend implementation
 export const useCreateConnectAccount = createPostService<
-  void,
-  StripeAccountResponse,
-  { businessId: string }
->((params) => `/v1/stripe/connect-account/${params.businessId}`);
+  { businessId: string },
+  StripeAccountResponse
+>("/v1/stripe-connect/account");
 
 export const useCreateAccountLink = createPostService<
   AccountLinkDto,
   AccountLinkResponse
->("/v1/stripe/account-link");
+>("/v1/stripe-connect/account-link");
 
 export const useGetAccountStatus = createGetService<
   AccountStatusResponse,
   { accountId: string }
->((params) => `/v1/stripe/account-status/${params.accountId}`);
+>((params) => `/v1/stripe-connect/status/${params.accountId}`);
 
 export const useUpdateBusinessStripeStatus = createPostService<
+  { id: string },
   void,
-  void,
-  { accountId: string }
->((params) => `/v1/stripe/update-status/${params.accountId}`);
+  { businessId: string }
+>((params) => `/v1/stripe-connect/update-business/${params.businessId}`);
 
-// Improved account session service with better JSON serialization
 export const useCreateAccountSession = createPostService<
   { accountId: string },
   AccountSessionResponse
->("/v1/stripe/account-session", {
+>("/v1/stripe-connect/account-session", {
   transformRequest: (data) => {
-    // Ensure proper JSON formatting to avoid issues
     return JSON.stringify(data);
   },
 });
 
-// New service to check if onboarding is already complete - to avoid unnecessary setup
 export const useCheckOnboardingStatus = createGetService<
   { isComplete: boolean },
   { businessId: string }
->((params) => `/v1/stripe/onboarding-status/${params.businessId}`);
+>((params) => `/v1/stripe-connect/onboarding-status/${params.businessId}`);
